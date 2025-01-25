@@ -20,10 +20,10 @@ def print_matrix():
 
 # Декоратор, проверяющий правильность хода
 def step_is_valid(p_func):
-    def wrapper(**kwargs):
+    def wrapper(p_player):
         while True:
             try:
-                col, row = map(int, input(f'Ход игрока "{kwargs['p_player']}": ').split())
+                col, row = map(int, input(f'Ход игрока "{p_player}": ').split())
                 col, row = col - 1, row - 1
             except:
                 print(f'\033[31m{str_info}, {str_format}{str_end}')
@@ -31,8 +31,7 @@ def step_is_valid(p_func):
                 continue
             if 0 <= col <= 2 and 0 <= row <= 2:
                 if field[row][col] == '-':
-                    kwargs['p_row'] = row; kwargs['p_col'] = col
-                    p_func(**kwargs)
+                    p_func(p_player = p_player, p_row = row, p_col = col)
                     break
                 else:
                     print(f'\033[31mВыберете ход повторно, клетка ({col + 1},{row + 1}) уже занята игроком "{field[row][col] }"{str_end}')
