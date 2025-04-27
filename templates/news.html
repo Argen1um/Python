@@ -1,0 +1,52 @@
+<!--  наследуемся от шаблона default.html, который мы создавали для flatpages -->
+{% extends 'flatpages/default.html' %} 
+
+{% load custom_filters %}
+
+<!-- Название у нас будет news -->
+{% block title %}
+News
+{% endblock title %}
+ 
+<!-- В контенте на странице мы выводим все новости -->
+{% block content %}
+   <h1>Все новости</h1>
+   <!-- Используем переданную из представления переменную time_now
+   и применяем к ней фильтр date. По назначению этот фильтр очень похож
+   на метод strftime у объекта datetime в Python — вывод времени
+   в указанном формате. -->
+   <h3>{% current_time '%b %d %Y' %}</h3>
+   <!-- Если в переменной next_sale будет None,
+   то выведется указанный в фильтре текст -->
+   <h4>{{ time_sensation|default_if_none:"Чуть позже сообщим о сенсации!" }}</h4>
+   <h4>Всего новостей: <strong>{{ news|length }}</strong></h4>  <!-- Добавлено здесь -->
+   <hr>
+   {% if news %}
+       <table>
+           <tr>
+               <td>Заголовок</td>
+               <td>Дата</td>
+               <td>Превью</td>
+               <!-- <td>Категория</td>-->
+           </tr>
+
+           {% for new in news %}
+           <tr>
+               <td>{{ new.headline|censor }}</td>
+               <td>{{ new.time_in|date:"d.m.Y" }}</td>
+               <td>{{ new.text|censor|truncatechars:20 }}</td>
+               <!--<td>
+                   {% for category in new.categories.all %}
+                       {{ category.name }}{% if not forloop.last %}, {% endif %}
+                   {% empty %}
+                       Без категории
+                   {% endfor %}
+               </td>-->
+           </tr>
+           {% endfor %}
+
+       </table>
+   {% else %}
+       <h2>Новостей нет!</h2>
+   {% endif %}
+{% endblock content %}

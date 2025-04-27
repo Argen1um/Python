@@ -1,0 +1,36 @@
+<!--  наследуемся от шаблона default.html, который мы создавали для flatpages -->
+{% extends 'flatpages/default.html' %}
+
+{% load custom_filters %}
+
+{% block title %}
+New
+{% endblock title %}
+
+{% block content %}
+    <article>
+        <!-- Заголовок -->
+        <h1>{{ new.headline|censor }}</h1>
+
+        <!-- Дату публикации в формате день.месяц.год -->
+        <p class="date">Опубликовано: {{ new.time_in|date:"d.m.Y" }}</p>
+
+        <!-- Полный текст статьи -->
+        <div class="content">
+            {{ new.text|censor|linebreaks }}  <!-- Фильтр linebreaks сохраняет переносы строк -->
+        </div>
+
+        <!-- Дополнительная информация -->
+        <div class="meta">
+            <!-- <p>Автор: {{ new.author.user.username }}</p>
+            <p>Рейтинг: {{ new.rating }}</p>
+            <p>Категории:
+                {% for category in new.products.all %}
+                    {{ category.name }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    Без категории
+                {% endfor %}
+            </p> -->
+        </div>
+    </article>
+{% endblock content %}
