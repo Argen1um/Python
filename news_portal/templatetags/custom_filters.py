@@ -1,6 +1,6 @@
 from django import template
 from datetime import datetime
-from django.conf import settings
+import json, os
 
 register = template.Library()
 
@@ -13,7 +13,16 @@ def censor(value):
    if not isinstance(value, str):
       return value
 
-   censored_words = getattr(settings, 'CENSORED_WORDS', [])
+   def get_censored_words():
+      file_path = os.path.join(os.path.dirname(__file__), 'data', 'censored_words.json')
+      try:
+         with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            return data.get('words', [])
+      except (FileNotFoundError, json.JSONDecodeError):
+         return []
+
+   censored_words = get_censored_words()
    words = value.split()
    censored_text = []
 
