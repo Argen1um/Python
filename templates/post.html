@@ -1,0 +1,23 @@
+<!--  наследуемся от шаблона default.html, который мы создавали для flatpages -->
+{% extends 'flatpages/default.html' %}
+
+{% load custom_filters %}
+
+{% block title %}
+Post
+{% endblock title %}
+
+{% block content %}
+    <article>
+        <!-- Заголовок -->
+        <h1>{{ post.headline|censor }}</h1>
+
+        <!-- Дату публикации в формате день.месяц.год -->
+        <p class="date">Опубликовано: {{ post.time_in|date:"d.m.Y" }}</p>
+
+        <!-- Полный текст статьи -->
+        <div class="content">
+            {{ post.text|censor|linebreaks }}  <!-- Фильтр linebreaks сохраняет переносы строк -->
+        </div>
+    </article>
+{% endblock content %}
