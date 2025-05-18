@@ -1,0 +1,9 @@
+<h2>Новые статьи в категории "{{ category.name }}" за неделю</h2>
+<ul>
+{% for article in articles %}
+    <li>
+        <a href="{{ domain }}{{ article.get_absolute_url }}">{{ article.headline }}</a>
+        <p>{{ article.preview }}</p>
+    </li>
+{% endfor %}
+</ul>

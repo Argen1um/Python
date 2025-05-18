@@ -1,0 +1,8 @@
+Новые статьи в категории "{{ category.name }}" за неделю:
+
+{% for article in articles %}
+- {{ article.headline }}
+  Ссылка: {{ domain }}{{ article.get_absolute_url }}
+  {{ article.preview }}
+
+{% endfor %}
