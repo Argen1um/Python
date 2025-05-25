@@ -1,0 +1,52 @@
+{% extends 'flatpages/default.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ articles_category.name }} - Новостной портал{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">{{ articles_category.name }}</h1>
+    
+    <!-- Кнопка подписки -->
+    <div class="mb-4">
+        {% if user.is_authenticated %}
+            {% if user in articles_category.subscribers.all %}
+                <a href="{% url 'articles:unsubscribe_articles_category' articles_category.pk %}" class="btn btn-danger">Отписаться</a>
+            {% else %}
+                <a href="{% url 'articles:subscribe_articles_category' articles_category.pk %}" class="btn btn-success">Подписаться</a>
+            {% endif %}
+        {% else %}
+            <p class="text-muted">Для подписки на категорию <a href="{% url 'login' %}">войдите</a> в систему</p>
+        {% endif %}
+    </div>
+
+    <!-- Список статей в категории Рейтинг: -->
+    <div class="row">
+        {% for post in articles %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ post.headline|censor }}</h5>
+                        <p class="card-text">{{ post.preview|censor }}</p>
+                        <p class="text-muted">
+                            <small>
+                                {{ post.time_in|date:"d.m.Y H:i" }} | 
+                                Автор: {{ post.author.user.username }} |
+                                Категории:
+                                {% for cat in post.categories.all %}
+                                    <span class="badge bg-secondary">{{ cat.name }}</span>
+                                {% endfor %}
+                            </small>
+                        </p>
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-primary">Читать далее</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">В этой категории пока нет публикаций</div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
