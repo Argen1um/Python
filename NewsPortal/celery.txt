@@ -1,0 +1,2 @@
+celery -A NewsPortal worker -l info --pool=solo
+celery -A NewsPortal beat -l info
