@@ -214,12 +214,6 @@ STATICFILES_DIRS = [
     BASE_DIR / "static"
 ]
 
-# фильтр для писем: убираем traceback (exc_info), чтобы соответствовать заданию п.5
-def strip_exc_info(record: logging.LogRecord) -> bool:
-    record.exc_info = None
-    record.exc_text = None
-    return True
-
 (BASE_DIR / "logs").mkdir(exist_ok=True)
 
 LOGGING = {
