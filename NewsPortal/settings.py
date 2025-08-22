@@ -225,101 +225,68 @@ def strip_exc_info(record: logging.LogRecord) -> bool:
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-
     'formatters': {
-        # Консоль: DEBUG/INFO (без pathname)
-        'console_debug_info': {
-            'format': '%(asctime)s [%(levelname)s] %(message)s',
+        'console': {
+            'format': '%(asctime)s [%(levelname)s] %(message)s %(pathname)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
-        # Консоль: WARNING+ (с pathname)
-        'console_warning_plus': {
-            'format': '%(asctime)s [%(levelname)s] %(pathname)s: %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
-        # general.log: время, уровень, module, сообщение
-        'general_file': {
+        'general': {
             'format': '%(asctime)s [%(levelname)s] %(module)s: %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
-        # errors.log и email: время, уровень, сообщение | pathname
-        # (в файл попадёт и трейсбек, если exc_info=True; в письмах мы его убираем фильтром)
-        'errors_file': {
+        'errors': {
             'format': '%(asctime)s [%(levelname)s] %(message)s | %(pathname)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'security': {
+            'format': '%(asctime)s [%(levelname)s] %(module)s: %(message)s',
         },
     },
-
     'filters': {
-        # В консоль — только при DEBUG=True
-        'require_debug_true': { '()': 'django.utils.log.RequireDebugTrue' },
-        # В general.log и на почту — только при DEBUG=False
-        'require_debug_false': { '()': 'django.utils.log.RequireDebugFalse' },
-        # Убираем traceback из писем (только для mail_admins)
-        'strip_exc_info': {
-            '()': 'django.utils.log.CallbackFilter',
-            'callback': 'NewsPortal.settings.strip_exc_info',
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
         },
     },
-
     'handlers': {
-        # Консоль: DEBUG/INFO
-        'console_debug_info': {
+        'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'console_debug_info',
             'filters': ['require_debug_true'],
+            'formatter': 'console',
         },
-        # Консоль: WARNING+
-        'console_warning_plus': {
-            'level': 'WARNING',
-            'class': 'logging.StreamHandler',
-            'formatter': 'console_warning_plus',
-            'filters': ['require_debug_true'],
-        },
-        # general.log — INFO+ (только при DEBUG=False)
         'general_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'general.log',
-            'formatter': 'general_file',
+            'formatter': 'general',
             'filters': ['require_debug_false'],
-            'encoding': 'utf-8',
         },
-        # errors.log — ERROR+ (всегда)
         'errors_file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'errors.log',
-            'formatter': 'errors_file',
-            'encoding': 'utf-8',
+            'formatter': 'errors',
         },
-        # Письма админу — ERROR+ (только при DEBUG=False), формат как в errors.log, но без стэка
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
-            'filters': ['require_debug_false', 'strip_exc_info'],
-            'formatter': 'errors_file',
+            'filters': ['require_debug_false'],
+            'formatter': 'errors',
         },
-        # security.log — только из django.security
         'security_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'security.log',
-            'formatter': 'general_file',  # формат "время уровень module сообщение"
-            'encoding': 'utf-8',
+            'formatter': 'security',
         },
     },
-
     'loggers': {
-        # основной логгер django → консоль (DEBUG=True) и general.log (DEBUG=False)
         'django': {
-            'handlers': ['console_debug_info', 'console_warning_plus', 'general_file'],
+            'handlers': ['console', 'general_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-
-        # ERROR/CRITICAL → errors.log + почта (при DEBUG=False)
         'django.request': {
             'handlers': ['errors_file', 'mail_admins'],
             'level': 'ERROR',
@@ -330,7 +297,6 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        # ERROR/CRITICAL только в файл
         'django.template': {
             'handlers': ['errors_file'],
             'level': 'ERROR',
@@ -341,7 +307,6 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        # безопасность → security.log
         'django.security': {
             'handlers': ['security_file'],
             'level': 'DEBUG',
