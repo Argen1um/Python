@@ -15,6 +15,9 @@ import logging
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale')
+]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -48,6 +51,7 @@ ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost'
 
 # Application definition
 INSTALLED_APPS = [
+    'modeltranslation', # обязательно впишите его перед админом
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -96,6 +100,7 @@ SITE_ID = 1
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -104,11 +109,11 @@ MIDDLEWARE = [
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     # Add the account middleware:
     "allauth.account.middleware.AccountMiddleware",
-
     # кэширование всего сайта
     # 'django.middleware.cache.UpdateCacheMiddleware',
     # 'django.middleware.common.CommonMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
+    'basic.middlewares.TimezoneMiddleware',
 ]
 
 ROOT_URLCONF = 'NewsPortal.urls'
@@ -159,9 +164,6 @@ print(SocialAccount.objects.all())  # Есть ли привязанные со�
 
 WSGI_APPLICATION = 'NewsPortal.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -191,14 +193,19 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# MODELTRANSLATION_DEFAULT_LANGUAGE = 'ru'
+# MODELTRANSLATION_PREVENT_FALLBACK = False  # Должно быть False
+# MODELTRANSLATION_FALLBACK_LANGUAGES = ('ru', 'en')  # Порядок важен!
+
+LANGUAGE_CODE = 'ru-ru'
+USE_I18N = True
+LANGUAGES = [
+    ('ru', 'Russian'),
+    ('en', 'English'),
+]
 
 TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -220,18 +227,25 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'console': {
+        # Базовое форматирование (для DEBUG в консоль)
+        'basic': {
+            'format': '%(asctime)s [%(levelname)s] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        # Базовое + путь (для WARNING в консоль, для почты)
+        'basic_path': {
             'format': '%(asctime)s [%(levelname)s] %(message)s %(pathname)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
-        'general': {
-            'format': '%(asctime)s [%(levelname)s] %(module)s: %(message)s',
+        # Базовое + путь + стек (для ERROR в консоль и errors.log)
+        'basic_path_stack': {
+            'format': '%(asctime)s [%(levelname)s] %(message)s %(pathname)s\n%(exc_info)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
-        'errors': {
-            'format': '%(asctime)s [%(levelname)s] %(message)s | %(pathname)s',
-        },
-        'security': {
+        # Базовое + модуль (для general.log и security.log)
+        'basic_module': {
             'format': '%(asctime)s [%(levelname)s] %(module)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
     'filters': {
@@ -243,41 +257,53 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {
+        'console_debug': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'filters': ['require_debug_true'],
-            'formatter': 'console',
+            'formatter': 'basic',
+        },
+        'console_warning': {
+            'level': 'WARNING',
+            'class': 'logging.StreamHandler',
+            'filters': ['require_debug_true'],
+            'formatter': 'basic_path',
+        },
+        'console_error': {
+            'level': 'ERROR',
+            'class': 'logging.StreamHandler',
+            'filters': ['require_debug_true'],
+            'formatter': 'basic_path_stack',
         },
         'general_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'general.log',
-            'formatter': 'general',
+            'formatter': 'basic_module',
             'filters': ['require_debug_false'],
         },
         'errors_file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'errors.log',
-            'formatter': 'errors',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-            'filters': ['require_debug_false'],
-            'formatter': 'errors',
+            'formatter': 'basic_path_stack',
         },
         'security_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'security.log',
-            'formatter': 'security',
+            'formatter': 'basic_module',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false'],
+            'formatter': 'basic_path',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'general_file'],
+            'handlers': ['console_debug', 'console_warning', 'console_error', 'general_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
